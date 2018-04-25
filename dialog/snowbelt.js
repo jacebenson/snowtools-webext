@@ -74,7 +74,16 @@ function closeTab (evt) {
  * Opens a tab to the ext page that diff's two records
  * @param {object} source (url that has record), target instance name with diff'd content
  */
-function diff(evt){
+function test(evt){
+    try {
+        var instances = JSON.parse(localStorage.knownInstances);
+        console.log(instances);
+    } catch(error) {
+        console.error('test error', error);
+    }
+}
+
+ function diff(evt){
     //var w = window.open("chrome://snowbeld-webext/dialog/snowbelt.html");
       let tabid = "";
       if (evt.target.getAttribute("data-id")) {
@@ -489,9 +498,39 @@ function refreshList () {
                     { title: "&#128190; Grab logs (csv)", fn: grabLogsCSV },
                     { title: "&#128190; Grab logs (txt)", fn: grabLogsTXT },
                     //{ title: "&#8690; Reopen in frame" + JSON.stringify(context.knownInstances), fn: diff }
-                    { title: "&#8690; Reopen in frame", fn: diff }
                 ];
+                addDiffLinks(items);
+                //iterate over instances;
+                try {
+                    var instances = JSON.parse(localStorage.knownInstances);
+                    console.log(instances);
+                    for(var instance in instances){
+                        var instanceURL = instances[instance] + '';
+                        items.push({
+                            title: "&#8690; Diff this record with " + instanceURL,
+                            fn: function(evt){
+                                let tabid = "";
+                                if (evt.target.getAttribute("data-id")) {
+                                    tabid = evt.target.getAttribute("data-id");
+                                } else if (context.clicked && context.clicked.getAttribute("data-id")) {
+                                    tabid = context.clicked.getAttribute("data-id");
+                                }
+                                tabid = parseInt(tabid);
+                                chrome.tabs.get(tabid, function (tab) {
+                                    console.log(tab.url);
+                                    tab.url = decodeURIComponent(tab.url.replace('/nav_to.do?uri=',''));
+                                    let table = new URL(tab.url).pathname.replace(/(\/)|(\.do)/g,'');
+                                    let sys_id = (new URL(tab.url)).searchParams.get('sys_id');
+                                    console.log(table + ': ' + sys_id);
+                                    //displayMessage("Already in a frame");
+                                });
+                            }
+                        });
+                    }
 
+                } catch(error) {
+                    console.error('test error', error);
+                }
                 basicContext.show(items, e);
             });
         });
