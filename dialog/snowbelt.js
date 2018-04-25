@@ -71,6 +71,26 @@ function closeTab (evt) {
 }
 
 /**
+ * Opens a tab to the ext page that diff's two records
+ * @param {object} source (url that has record), target instance name with diff'd content
+ */
+function diff(evt){
+    //var w = window.open("chrome://snowbeld-webext/dialog/snowbelt.html");
+      let tabid = "";
+      if (evt.target.getAttribute("data-id")) {
+          tabid = evt.target.getAttribute("data-id");
+      } else if (context.clicked && context.clicked.getAttribute("data-id")) {
+          tabid = context.clicked.getAttribute("data-id");
+      }
+      tabid = parseInt(tabid);
+      chrome.tabs.get(tabid, function (tab) {
+        browser.tabs.create({
+            "url": "/dialog/diff.html?url=" + tab.url
+          });
+      });
+}
+
+/**
  * Moves tab into a navigation frame
  * @param {object} evt the event that triggered the action
  */
@@ -459,6 +479,7 @@ function refreshList () {
             el.addEventListener("click", closeTab);
         });
         // add the "other actions" menu
+        //context.knownInstances = JSON.parse(localStorage.knownInstances);
         elements = document.querySelectorAll("a[title=\"other commands\"]");
         [].forEach.call(elements, function (el) {
             el.addEventListener("click", function (e) {
@@ -466,7 +487,9 @@ function refreshList () {
                 let items = [
                     { title: "&#8690; Reopen in frame", fn: popIn },
                     { title: "&#128190; Grab logs (csv)", fn: grabLogsCSV },
-                    { title: "&#128190; Grab logs (txt)", fn: grabLogsTXT }
+                    { title: "&#128190; Grab logs (txt)", fn: grabLogsTXT },
+                    //{ title: "&#8690; Reopen in frame" + JSON.stringify(context.knownInstances), fn: diff }
+                    { title: "&#8690; Reopen in frame", fn: diff }
                 ];
 
                 basicContext.show(items, e);
